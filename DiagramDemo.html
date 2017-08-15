@@ -1,0 +1,314 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Demo</title>
+    <link rel="stylesheet" type="text/css" class="library" href="bootstrap.min.css">
+    <script type="text/javascript" class="library" src="js/raphael-min.js"></script>
+    <script type="text/javascript" class="library" src="js/jquery-1.7.2.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/relation.min.js"></script>
+</head>
+
+<body>
+    <span id="help">
+        <a href="http://t.qq.com/Richard12123?preview&pgv_ref=im.wblog.profile" target="_blank">More Help Contact Author</a>
+    </span>
+    <div id="div2" style="margin-left: 5px;">
+        <span style="display: inline-block">
+            <p class="label">编辑区</p>
+            <div id="svg-container-edit">
+            </div>
+        </span>
+        <span style="display: inline-block">
+            <div id="divcfg">
+                <label class="bar">展示风格：</label>
+                <input id="doughnut" value="doughnut" type="radio" name="rd" />圆环图
+                <br />
+                <input id="tree_H" value="tree_H" type="radio" name="rd" checked="checked" />横向树形图 
+                <br />
+                <input id="tree_V" value="tree_V" type="radio" name="rd" />垂直树形图 
+                <br />
+                <textarea id="saveData" style="width: 160px; height: 400px;"></textarea>
+            </div>
+            <button onclick="doSave()" class="btn btn-primary btn-mini">取得数据</button><br />
+            <button onclick="doInit()" class="btn btn-primary btn-mini">生成图形</button><br />
+            <button onclick="doClear()" class="btn btn-primary btn-mini">清空数据</button><br />
+        </span>
+        <span style="display: inline-block">
+            <p class="label">显示区</p>
+            <div id="svg-container-view">
+            </div>
+        </span>
+
+    </div>
+    <div class="modal hide fade in" id="myModal">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">×</a>
+            <h3>节点信息</h3>
+        </div>
+        <div class="modal-body">
+            <div id="nodeInfo"></div>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn" data-dismiss="modal">关闭</a>
+            <a href="#" class="btn btn-primary" d>保存更新</a>
+        </div>
+    </div>
+    <footer>
+        <div id="dd" class="span12">
+            &copy;  by <a href="http://t.qq.com/Richard12123?preview&pgv_ref=im.wblog.profile">许利强</a> 2014.1.12
+        </div>
+    </footer>
+</body>
+</html>
+<style>
+    #help a {
+        background: #000;
+        color: #fff;
+        text-decoration: none;
+        font-family: arial, sans-serif;
+        text-align: center;
+        font-weight: bold;
+        padding: 5px 40px;
+        font-size: 1rem;
+        line-height: 2rem;
+        position: relative;
+        transition: 0.5s;
+    }
+
+        #help a:hover {
+            background: #060;
+            color: #fff;
+        }
+
+        #help a::before, #help a::after {
+            content: "";
+            width: 100%;
+            display: block;
+            position: absolute;
+            top: 1px;
+            left: 0;
+            height: 1px;
+            background: #fff;
+        }
+
+        #help a::after {
+            bottom: 1px;
+            top: auto;
+        }
+
+    @media screen and (min-width:800px) {
+        #help {
+            position: absolute;
+            display: block;
+            top: 0;
+            right: 0;
+            width: 200px;
+            overflow: hidden;
+            height: 200px;
+        }
+
+            #help a {
+                width: 200px;
+                position: absolute;
+                top: 60px;
+                right: -60px;
+                transform: rotate(45deg);
+                -webkit-transform: rotate(45deg);
+                box-shadow: 4px 4px 10px rgba(0,0,0,0.8);
+            }
+    }
+</style>
+
+<!--json数据-->
+<script>
+
+    /* 数据格式说明
+        id: '100001',   （必填）
+        name: '根节点', （必填）
+        parent: '0', //父节点ID  （必填）
+        color: '#ff0000', //节点图形填充颜色 （必填）
+        weight: 15, //节点权重  （必填）
+        shape:6, //节点形状   （必填）1-圆形；2-椭圆；3三角形；4-矩形；5-五边形；6-六边形；7-圆角矩形
+        childNodes: [], //子节点
+        theta:0,  
+        radius:84 
+    }
+    */
+    var json = {
+        "id": "100001", "name": "根节点", "parent": "0", "color": "#ff0000", "weight": 15, "shape": 6,
+        "childNodes": [
+            {
+                "id": "200001", "name": "1_1", "parent": "100001", "weight": 8, "color": "#CA0D86", "shape": 1,
+                "childNodes": []
+            },
+            {
+                "id": "200002", "name": "1_2", "parent": "100001", "weight": 15, "color": "#1F1F1F", "shape": 1,
+                "childNodes": [
+                    {
+                        "id": "300001", "name": "1_2_1", "parent": "200002", "weight": 15, "color": "#87B11D", "shape": 1,
+                        "childNodes": []
+                    },
+                    {
+                        "id": "300002", "name": "1_2_2", "parent": "200002", "weight": 15, "color": "#AC951E", "shape": 6,
+                        "childNodes": [
+                            {
+                                "id": "400001", "name": "1_2_2_1", "parent": "300002", "weight": 15, "color": "#48D648", "shape": 2,
+                                "childNodes": []
+                            },
+                            {
+                                "id": "400002", "name": "1_2_2_2", "parent": "300002", "weight": 15, "color": "#536D24", "shape": 7,
+                                "childNodes": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "200003", "name": "1_3", "parent": "100001", "weight": 15, "color": "#CA0D86", "shape": 1,
+                "childNodes": []
+            },
+            {
+                "id": "200004", "name": "1_4", "parent": "100001", "weight": 15, "color": "#F89322", "shape": 1,
+                "childNodes": [
+                    {
+                        "id": "300003", "name": "1_4_1", "parent": "200004", "weight": 15, "color": "#FFCF14", "shape": 5,
+                        "childNodes": [
+                            {
+                                "id": "400003", "name": "1_4_1_1", "parent": "300003", "weight": 15, "color": "#026102", "shape": 3,
+                                "childNodes": []
+                            },
+                            {
+                                "id": "400004", "name": "1_4_1_2", "parent": "300003", "weight": 15, "color": "#3277B5", "shape": 7,
+                                "childNodes": []
+                            }
+                        ]
+                    },
+                    {
+                        "id": "300004", "name": "1_4_2", "parent": "200004", "weight": 15, "color": "#FFEA0D", "shape": 1,
+                        "childNodes": []
+                    },
+                    {
+                        "id": "300005", "name": "1_4_3", "parent": "200004", "weight": 15, "color": "#87B11D", "shape": 4,
+                        "childNodes": [
+                            {
+                                "id": "400005", "name": "1_4_3_1", "parent": "300005", "weight": 15, "color": "#309179", "shape": 6,
+                                "childNodes": []
+                            },
+                            {
+                                "id": "400006", "name": "1_4_3_2", "parent": "300005", "weight": 15, "color": "#3277B5", "shape": 1,
+                                "childNodes": []
+                            }
+                        ]
+                    },
+                    {
+                        "id": "300006", "name": "1_4_4", "parent": "200004", "weight": 15, "color": "#008253", "shape": 2,
+                        "childNodes": []
+                    }
+                ]
+            },
+            {
+                "id": "200005", "name": "1_5", "parent": "100001", "weight": 15, "color": "#764394", "shape": 1,
+                "childNodes": [
+                    {
+                        "id": "300007", "name": "1_5_1", "parent": "200005", "weight": 15, "color": "#3277B5", "shape": 1,
+                        "childNodes": [
+                            {
+                                "id": "400007", "name": "1_5_1_1", "parent": "300007", "weight": 15, "color": "#4C549F", "shape": 1,
+                                "childNodes": []
+                            }
+                        ]
+                    },
+                   {
+                       "id": "300008", "name": "1_5_2", "parent": "200005", "weight": 15, "color": "#4C549F", "shape": 2,
+                       "childNodes": []
+                   }
+                ]
+            },
+            {
+                "id": "200006", "name": "1_6", "parent": "100001", "weight": 15, "color": "#F16729", "shape": 3,
+                "childNodes": []
+            }]
+    };
+
+
+</script>
+
+<script type="text/javascript">
+    //初始化参数，一下为默认值，可选择性自定义，
+    /*var initparam = {
+        node: '#svg-container-edit',//node：#加画布外层divID
+        width: 600,  //画布宽度
+        height: 600,  //画布高度
+        nodecirclemax: 30,  //节点半径最大值
+        nodecirclemin: 20,  //节点半径最小值
+        nodestrokecolor: '#3F3E3E', //节点轮廓颜色 默认
+        nodestrokewidth: 0.5,     //节点轮廓粗细
+        nodeTextColor: '#fff',  //节点中字体的颜色,
+        nodeTextSize: '14px',  //节点中字体的大小
+        nodeTextWeight: '600',  //节点中字体的粗细
+        paperFilletStroke: "#666",//画布圆角轮廓颜色
+        paperFilletRadius: 10,//画布圆角半径
+        mode: 'edit',   //edit为可移动 view为不可移动
+        totallevel: 5,  //总层数
+        showstyle: 'tree_H',  //展示风格 doughnut:圆环图；tree_H:横向树形图；tree_V：垂直树形图
+        lintwidth: '2px',    // 链接线宽
+        lintcolor: '#C6D9EC',    // 链接线宽
+        middlePiont: 9,       // 链接线中间点半径
+        middlePiontFill: '#BED8EC',       // 链接线中间点填充颜色
+        middlePiontStroke: '#C6D9EC',       // 链接线中间点轮廓颜色
+        middlePiontText: '?',     // 中间点内文本
+        middlePiontTextColor: '#fff',       // 中间点内文本颜色
+    }
+    */
+    var myinit = { node: '#svg-container-edit', width: 570, height: 570, mode: 'edit', showstyle: 'doughnut' }
+    var csEdit = new Relation(myinit);//创建编辑区画布
+    var csView = new Relation({ node: '#svg-container-view', width: 570, height: 570 });//创建显示区画布
+    csEdit.render(json);//为编辑区画布加载json数据
+    //添加节点点击事件  edit模式下双击，view下单击
+    csEdit.on('nodeClick', function (e) {
+        var context = "节点名称：" + e.node.name + "<br/>节点x坐标：" + e.x + "<br/>节点y坐标：" + e.y + "<br/>节点ID：" + e.node.id + "<br/>父节点ID：" + e.node.parent;
+        showDialge(e, context);
+    });
+    //添加关系点击事件
+    csEdit.on('relationClick', function (e) {
+        var context = "节点x坐标：" + e.x + "<br/>节点y坐标：" + e.y + "<br/>子节点ID：" + e.id + "<br/>父节点ID：" + e.parentId;
+        showDialge(e, context);
+    });
+    //弹出对话框
+    function showDialge(e, context) {
+        $('#nodeInfo').remove();
+        $('<div id="nodeInfo">' + context + '</div>').appendTo($('.modal-body'));
+        $('#myModal').modal({ //bootstrap填出对话框方法
+            backdrop: true,//为true时，显示对话框的遮蔽背景，鼠标点击背景即可关闭对话框。  为false时，无背景。
+            keyboard: true,//为true时按下ESC键关闭模态对话框。 为false时无效。
+            show: true   //是否在初始化时显示对话框。
+        });
+    }
+    //取得编辑区数据，显示在文本域中
+    function doSave() {
+        var data = csEdit.preview();
+        document.getElementById('saveData').value = JSON.stringify(data);
+    }
+    //将文本域中的数据加载到现实区
+    function doInit() {
+        var data = JSON.parse(document.getElementById('saveData').value);
+        var cfg = { node: '#svg-container-view', width: 570, height: 570, mode: 'view', showstyle: 'tree_H' };
+        cfg.showstyle = $('input[name="rd"]:checked').val();//取得展示风格
+        var cs = new Relation(cfg);
+        cs.render(data);
+        cs.on('nodeClick', function (e) {
+            var context = "节点x坐标：" + e.x + "<br/>节点y坐标：" + e.y + "<br/>节点名称：" + e.node.name + "<br/>节点ID：" + e.node.id + "<br/>父节点ID：" + e.node.parent;
+            showDialge(e, context);
+        });
+        cs.on('relationClick', function (e) {
+            var context = "节点x坐标：" + e.x + "<br/>节点y坐标：" + e.y + "<br/>子节点ID：" + e.id + "<br/>父节点ID：" + e.parentId;
+            showDialge(e, context);
+        });
+    }
+    //清空文本域
+    function doClear() {
+        document.getElementById('saveData').value = "";
+    }
+</script>
